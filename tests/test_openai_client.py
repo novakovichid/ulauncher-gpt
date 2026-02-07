@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import pytest
+import requests
+
+from ulauncher_gpt.config import PluginConfig
+from ulauncher_gpt.openai_client import APIError, OpenAIResponsesClient
+
+
+class _FakeResponse:
+    def __init__(self, status_code: int, payload=None, text: str = "") -> None:
+        self.status_code = status_code
+        self._payload = payload
+        self.text = text
+
+    def json(self):
+        if isinstance(self._payload, Exception):
+            raise self._payload
+        return self._payload
+
+
+class _FakeSession:
+    def __init__(self, outputs):
+        self.outputs = outputs
+        self.calls = 0
+
+    def post(self, *args, **kwargs):
+        out = self.outputs[self.calls]
+        self.calls += 1
+        if isinstance(out, Exception):
+            raise out
+        return out
+
+
+def _config() -> PluginConfig:
+    return PluginConfig.from_preferences(
+        {
+            "api_key": "sk-test",
+            "model": "gpt-5",
+            "endpoint_url": "https://api.openai.com/v1/responses",
+            "system_prompt": "x",
+            "temperature": "1",
+            "max_completion_tokens": "50",
+            "top_p": "1",
+            "frequency_penalty": "0",
+            "presence_penalty": "0",
+            "line_wrap": "50",
+            "verbosity": "low",
+            "reasoning_effort": "minimal",
+        }
+    )
+
+
+def test_generate_reads_output_text() -> None:
+    session = _FakeSession(
+        [_FakeResponse(200, {"id": "r1", "model": "gpt-5", "output_text": "hello"})]
+    )
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    answer = client.generate("ping", _config(), correlation_id="cid")
+    assert answer.text == "hello"
+    assert answer.raw_response_id == "r1"
+
+
+def test_generate_fallback_output_parser() -> None:
+    payload = {
+        "output": [
+            {
+                "content": [
+                    {"type": "output_text", "text": "line1"},
+                    {"type": "output_text", "text": "line2"},
+                ]
+            }
+        ]
+    }
+    session = _FakeSession([_FakeResponse(200, payload)])
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    answer = client.generate("ping", _config(), correlation_id="cid")
+    assert answer.text == "line1\nline2"
+
+
+def test_generate_retries_on_timeout_then_succeeds() -> None:
+    session = _FakeSession(
+        [
+            requests.Timeout("slow"),
+            _FakeResponse(200, {"output_text": "ok"}),
+        ]
+    )
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    answer = client.generate("ping", _config(), correlation_id="cid")
+    assert answer.text == "ok"
+    assert session.calls == 2
+
+
+def test_generate_raises_on_http_error() -> None:
+    session = _FakeSession([_FakeResponse(401, {"error": {"message": "bad key"}})])
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    with pytest.raises(APIError) as exc:
+        client.generate("ping", _config(), correlation_id="cid")
+    assert "bad key" in str(exc.value)
+
+
+def test_generate_raises_on_malformed_json() -> None:
+    session = _FakeSession([_FakeResponse(200, ValueError("bad json"))])
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    with pytest.raises(APIError):
+        client.generate("ping", _config(), correlation_id="cid")
