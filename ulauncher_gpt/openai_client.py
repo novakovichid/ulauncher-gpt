@@ -6,6 +6,7 @@ import logging
 import time
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse
 
 import requests
 
@@ -41,6 +42,7 @@ class OpenAIResponsesClient:
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
         self.retry_backoff_seconds = retry_backoff_seconds
+        self._models_cache: dict[str, tuple[float, list[str]]] = {}
 
     def generate(self, prompt: str, config: PluginConfig, correlation_id: str) -> GeneratedAnswer:
         """Call Responses API and return extracted output text."""
@@ -130,6 +132,48 @@ class OpenAIResponsesClient:
     def _sleep_before_retry(self, attempt: int) -> None:
         time.sleep(self.retry_backoff_seconds * (2 ** (attempt - 1)))
 
+    def list_models(self, config: PluginConfig, correlation_id: str) -> list[str]:
+        """Return model IDs visible to the provided API key."""
+        cache_key = f"{config.endpoint_url}|{config.api_key}"
+        cached = self._models_cache.get(cache_key)
+        if cached and cached[0] > time.time():
+            return cached[1]
+
+        endpoint = _derive_models_endpoint(config.endpoint_url)
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {config.api_key}",
+        }
+        try:
+            response = self.session.get(
+                endpoint,
+                headers=headers,
+                timeout=min(self.timeout_seconds, 8.0),
+            )
+        except (requests.Timeout, requests.ConnectionError) as exc:
+            raise APIError(f"Не удалось получить список моделей: {exc}") from exc
+
+        if response.status_code >= 400:
+            raise APIError(self._extract_api_error(response))
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise APIError("OpenAI вернул некорректный JSON списка моделей") from exc
+
+        if not isinstance(payload, dict) or not isinstance(payload.get("data"), list):
+            raise APIError("Неожиданный формат ответа /v1/models")
+
+        models: list[str] = []
+        for row in payload["data"]:
+            if isinstance(row, dict):
+                model_id = row.get("id")
+                if isinstance(model_id, str) and model_id.strip():
+                    models.append(model_id)
+        models = sorted(set(models))
+        self._models_cache[cache_key] = (time.time() + 300.0, models)
+        logger.debug("[%s] models fetched: %s", correlation_id, len(models))
+        return models
+
 
 def _as_optional_str(value: Any) -> str | None:
     return value if isinstance(value, str) and value.strip() else None
@@ -156,3 +200,16 @@ def _extract_text_from_output(output: Any) -> str:
                 if isinstance(text, str) and text.strip():
                     chunks.append(text)
     return "\n".join([chunk for chunk in chunks if chunk.strip()]).strip()
+
+
+def _derive_models_endpoint(responses_endpoint: str) -> str:
+    parsed = urlparse(responses_endpoint)
+    if not parsed.scheme or not parsed.netloc:
+        return "https://api.openai.com/v1/models"
+
+    path = parsed.path or "/v1/responses"
+    if "/v1/" in path:
+        prefix = path.split("/v1/")[0]
+        return f"{parsed.scheme}://{parsed.netloc}{prefix}/v1/models"
+    base = path.rsplit("/", 1)[0] if "/" in path else ""
+    return f"{parsed.scheme}://{parsed.netloc}{base}/models"

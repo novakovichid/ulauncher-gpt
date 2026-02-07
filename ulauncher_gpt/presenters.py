@@ -46,6 +46,21 @@ def error_action(locale: str, message: str, clipboard: str | None = None) -> Ren
     )
 
 
+def info_action(title: str, message: str, clipboard: str | None = None) -> RenderResultListAction:
+    """Show informational message block."""
+    payload = clipboard if clipboard is not None else message
+    return RenderResultListAction(
+        [
+            ExtensionResultItem(
+                icon=EXTENSION_ICON,
+                name=title,
+                description=wrap_text(message),
+                on_enter=CopyToClipboardAction(payload),
+            )
+        ]
+    )
+
+
 def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> RenderResultListAction:
     """Render completion and convenience links for prompt."""
     ui_text = truncate_for_ui(wrap_text(answer, line_wrap))
@@ -68,5 +83,46 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
                 name=t(locale, "open_google"),
                 on_enter=OpenUrlAction(f"https://www.google.com/search?q={encoded_prompt}"),
             ),
+            ExtensionSmallResultItem(
+                icon=EXTENSION_ICON,
+                name="Показать модели API-ключа: /models",
+                on_enter=CopyToClipboardAction("/models"),
+            ),
         ]
     )
+
+
+def models_action(
+    locale: str,
+    models: list[str],
+    active_model: str | None = None,
+) -> RenderResultListAction:
+    """Render available model list returned by /v1/models."""
+    _ = locale
+    models_text = ", ".join(models) if models else "Список пуст"
+    items = [
+        ExtensionResultItem(
+            icon=EXTENSION_ICON,
+            name=f"Доступные модели: {len(models)} | Текущая: {active_model or 'из настроек'}",
+            description=wrap_text(models_text, 80),
+            on_enter=CopyToClipboardAction("\n".join(models)),
+        )
+    ]
+    for model in models[:15]:
+        label = f"[active] {model}" if active_model == model else model
+        items.append(
+            ExtensionSmallResultItem(
+                icon=EXTENSION_ICON,
+                name=label,
+                on_enter=CopyToClipboardAction(f"/use-model {model}"),
+            )
+        )
+    if len(models) > 15:
+        items.append(
+            ExtensionSmallResultItem(
+                icon=EXTENSION_ICON,
+                name=f"И ещё {len(models) - 15} моделей (полный список на первой строке)",
+                on_enter=DoNothingAction(),
+            )
+        )
+    return RenderResultListAction(items)

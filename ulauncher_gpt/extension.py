@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from typing import Any
 
 import requests
@@ -12,7 +13,13 @@ from ulauncher.api.shared.event import KeywordQueryEvent
 
 from .config import ConfigError, PluginConfig
 from .openai_client import APIError, OpenAIResponsesClient
-from .presenters import empty_prompt_action, error_action, success_action
+from .presenters import (
+    empty_prompt_action,
+    error_action,
+    info_action,
+    models_action,
+    success_action,
+)
 from .utils import mask_secret, new_correlation_id
 
 logger = logging.getLogger(__name__)
@@ -34,6 +41,7 @@ class KeywordQueryEventListener(EventListener):
 
     def __init__(self, client: OpenAIResponsesClient) -> None:
         self.client = client
+        self._selected_model: str | None = None
 
     def on_event(self, event: Any, extension: Any) -> Any:
         """Validate input, call OpenAI, and return a result list action."""
@@ -58,10 +66,50 @@ class KeywordQueryEventListener(EventListener):
         if not search_term:
             return empty_prompt_action(config.locale)
 
+        if search_term == "/models":
+            try:
+                models = self.client.list_models(config=config, correlation_id=correlation_id)
+            except APIError as exc:
+                logger.error("[%s] models list failed: %s", correlation_id, str(exc))
+                return error_action(config.locale, str(exc))
+            return models_action(config.locale, models, active_model=self._selected_model)
+
+        if search_term.startswith("/use-model "):
+            model_id = search_term.replace("/use-model ", "", 1).strip()
+            if not model_id:
+                return error_action(config.locale, "Использование: /use-model <model_id>")
+            try:
+                models = self.client.list_models(config=config, correlation_id=correlation_id)
+            except APIError as exc:
+                logger.error("[%s] models list failed: %s", correlation_id, str(exc))
+                return error_action(config.locale, str(exc))
+            if model_id not in models:
+                return error_action(
+                    config.locale,
+                    f"Модель '{model_id}' недоступна для этого API-ключа. Используйте /models",
+                )
+            self._selected_model = model_id
+            return info_action(
+                title="Runtime-модель обновлена",
+                message=f"Выбрана модель: {model_id}. Сброс: /clear-model",
+            )
+
+        if search_term == "/clear-model":
+            self._selected_model = None
+            return info_action(
+                title="Runtime-модель сброшена",
+                message="Теперь используется модель из настроек плагина.",
+            )
+
         try:
+            effective_config = (
+                replace(config, model=self._selected_model)
+                if self._selected_model is not None
+                else config
+            )
             generated = self.client.generate(
                 prompt=search_term,
-                config=config,
+                config=effective_config,
                 correlation_id=correlation_id,
             )
         except APIError as exc:

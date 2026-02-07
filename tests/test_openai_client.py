@@ -31,6 +31,13 @@ class _FakeSession:
             raise out
         return out
 
+    def get(self, *args, **kwargs):
+        out = self.outputs[self.calls]
+        self.calls += 1
+        if isinstance(out, Exception):
+            raise out
+        return out
+
 
 def _config() -> PluginConfig:
     return PluginConfig.from_preferences(
@@ -104,3 +111,17 @@ def test_generate_raises_on_malformed_json() -> None:
     client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
     with pytest.raises(APIError):
         client.generate("ping", _config(), correlation_id="cid")
+
+
+def test_list_models_returns_sorted_ids() -> None:
+    session = _FakeSession(
+        [
+            _FakeResponse(
+                200,
+                {"data": [{"id": "gpt-5-mini"}, {"id": "gpt-5"}, {"id": "gpt-5-mini"}]},
+            )
+        ]
+    )
+    client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
+    models = client.list_models(_config(), correlation_id="cid")
+    assert models == ["gpt-5", "gpt-5-mini"]

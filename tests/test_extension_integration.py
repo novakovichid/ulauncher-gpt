@@ -14,14 +14,27 @@ class _Event:
 
 
 class _StubClient:
-    def __init__(self, result: GeneratedAnswer | None = None, err: Exception | None = None):
+    def __init__(
+        self,
+        result: GeneratedAnswer | None = None,
+        err: Exception | None = None,
+        models: list[str] | None = None,
+    ):
         self.result = result
         self.err = err
+        self.models = models if models is not None else ["gpt-5"]
+        self.last_model: str | None = None
 
     def generate(self, prompt: str, config: PluginConfig, correlation_id: str):
         if self.err:
             raise self.err
+        self.last_model = config.model
         return self.result
+
+    def list_models(self, config: PluginConfig, correlation_id: str) -> list[str]:
+        if self.err:
+            raise self.err
+        return self.models
 
 
 class _ExtensionCtx:
@@ -71,6 +84,35 @@ def test_listener_success_action_contains_encoded_links() -> None:
         _StubClient(result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-5"))
     )
     action = listener.on_event(_Event("a b+c"), _ExtensionCtx(_prefs()))
-    assert len(action.items) == 3
+    assert len(action.items) == 4
     assert "a+b%2Bc" in action.items[1].on_enter.url
     assert "a+b%2Bc" in action.items[2].on_enter.url
+
+
+def test_listener_models_command_returns_models_list() -> None:
+    listener = KeywordQueryEventListener(_StubClient(models=["gpt-5", "gpt-5-mini"]))
+    action = listener.on_event(_Event("/models"), _ExtensionCtx(_prefs()))
+    assert "Доступные модели" in action.items[0].name
+    assert action.items[1].name == "gpt-5"
+
+
+def test_listener_use_model_and_clear_model() -> None:
+    client = _StubClient(
+        result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-5"),
+        models=["gpt-5", "gpt-5-mini"],
+    )
+    listener = KeywordQueryEventListener(client)
+    set_action = listener.on_event(_Event("/use-model gpt-5-mini"), _ExtensionCtx(_prefs()))
+    assert "Runtime-модель обновлена" in set_action.items[0].name
+
+    listener.on_event(_Event("hello"), _ExtensionCtx(_prefs()))
+    assert client.last_model == "gpt-5-mini"
+
+    clear_action = listener.on_event(_Event("/clear-model"), _ExtensionCtx(_prefs()))
+    assert "сброшена" in clear_action.items[0].name
+
+
+def test_listener_use_model_rejects_unavailable() -> None:
+    listener = KeywordQueryEventListener(_StubClient(models=["gpt-5"]))
+    action = listener.on_event(_Event("/use-model gpt-4.1"), _ExtensionCtx(_prefs()))
+    assert "недоступна" in action.items[0].description
