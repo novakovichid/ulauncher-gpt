@@ -92,10 +92,10 @@ def test_listener_success_action_contains_encoded_links() -> None:
 
 
 def test_listener_models_command_returns_models_list() -> None:
-    listener = KeywordQueryEventListener(_StubClient(models=["gpt-4.1", "gpt-4.1-mini"]))
+    listener = KeywordQueryEventListener(_StubClient(models=["gpt-4.1-mini", "gpt-4.1"]))
     action = listener.on_event(_Event("/models"), _ExtensionCtx(_prefs()))
     assert "Доступные модели" in action.items[0].name
-    assert action.items[1].name.startswith("gpt-4.1 | $2/1M in")
+    assert action.items[1].name.startswith("gpt-4.1 | Tier 1 | $2/1M in")
 
 
 def test_listener_use_model_and_clear_model() -> None:

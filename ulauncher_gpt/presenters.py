@@ -12,7 +12,7 @@ from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 
 from .i18n import t
-from .pricing import pricing_label
+from .pricing import power_label, power_rank, pricing_label
 from .utils import truncate_for_ui, wrap_text
 
 EXTENSION_ICON = "images/icon.png"
@@ -109,20 +109,21 @@ def models_action(
             on_enter=CopyToClipboardAction("\n".join(models)),
         )
     ]
-    for model in models[:15]:
+    ranked_models = sorted(models, key=lambda model: (power_rank(model), model))
+    for model in ranked_models[:15]:
         label = f"[active] {model}" if active_model == model else model
         items.append(
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name=f"{label} | {pricing_label(model)}",
+                name=f"{label} | {power_label(model)} | {pricing_label(model)}",
                 on_enter=CopyToClipboardAction(f"/use-model {model}"),
             )
         )
-    if len(models) > 15:
+    if len(ranked_models) > 15:
         items.append(
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name=f"И ещё {len(models) - 15} моделей (полный список на первой строке)",
+                name=f"И ещё {len(ranked_models) - 15} моделей (полный список на первой строке)",
                 on_enter=DoNothingAction(),
             )
         )

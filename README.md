@@ -30,7 +30,7 @@
 ## Настройки
 
 - `api_key`: ключ OpenAI.
-- `model`: `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini` или `custom` (в UI подписаны ориентиры цены за 1M токенов input/output).
+- `model`: `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini` или `custom` (в UI подписаны Tier мощности и ориентиры цены за 1M токенов input/output).
 - `endpoint_url`: по умолчанию `https://api.openai.com/v1/responses`.
 - `reasoning_effort`, `verbosity`, `temperature`, `top_p`, penalties.
 - `debug_mode`: безопасная диагностика (секреты маскируются).
@@ -41,6 +41,7 @@
 - Введите в Ulauncher: `gpt /models`
 - Плагин вызовет `GET /v1/models` с вашим ключом и покажет список доступных моделей.
 - Enter на первой строке копирует полный список, Enter на модели копирует команду выбора.
+- В списке есть ранжирование мощности: `Tier 1` (мощнее) -> `Tier 2` -> `Tier 3`.
 
 ## Выбор модели из доступных
 
