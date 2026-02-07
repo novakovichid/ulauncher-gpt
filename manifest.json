@@ -124,10 +124,14 @@
         },
         {
             "id": "debug_mode",
-            "type": "checkbox",
+            "type": "select",
             "name": "Debug Mode",
             "description": "Логирование безопасной диагностики (без секретов)",
-            "default_value": false
+            "default_value": "false",
+            "options": [
+                {"value": "false", "text": "Off"},
+                {"value": "true", "text": "On"}
+            ]
         },
         {
             "id": "locale",
