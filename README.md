@@ -1,17 +1,69 @@
-# [ULauncher](https://ulauncher.io/) Chat GPT Extension
+# Ulauncher GPT (Responses API)
 
-> Disclaimer: Not affiliated with OpenAI
+[![CI](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/ci.yml/badge.svg)](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/ci.yml)
+[![Security](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/security.yml/badge.svg)](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/security.yml)
+[![Docs](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/docs.yml/badge.svg)](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/docs.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25%2B-brightgreen)](https://github.com/novakovichid/ulauncher-gpt/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/novakovichid/ulauncher-gpt?sort=semver)](https://github.com/novakovichid/ulauncher-gpt/releases)
 
-This extension enables you to use ChatGPT custom system prompts to create your own custom assistant
+Плагин для [Ulauncher](https://ulauncher.io/), который отправляет запрос в OpenAI через **Responses API** и возвращает ответ прямо в лаунчер.
 
-![Screen shot](images/screenshot.png)
+![Скриншот](images/screenshot.png)
 
-Feel free to fork for a more domain specific assistant
+## Что сделано
 
-## Install
+- Миграция на `https://api.openai.com/v1/responses`.
+- Безопасная обработка ошибок API (HTTP/network/JSON).
+- Ретраи для временных сбоев сети.
+- Валидация настроек пользователя.
+- Unit/integration тесты с покрытием (порог `85%`).
+- CI quality gates: lint, type-check, tests, security.
+- Автодоки ключевых модулей через `pdoc`.
 
-- Open **Ulauncher**
-- Click on the **cog wheel** to open your preferences
-- Click on the **EXTENSIONS** tab
-- Click on **Add extension**
-- Paste this repository's URL
+## Установка
+
+1. Откройте Ulauncher.
+2. Перейдите в `Preferences -> Extensions`.
+3. Нажмите `Add extension`.
+4. Вставьте URL репозитория: `https://github.com/novakovichid/ulauncher-gpt`.
+
+## Настройки
+
+- `api_key`: ключ OpenAI.
+- `model`: `gpt-5`, `gpt-5-mini`, `gpt-5-nano` или `custom`.
+- `endpoint_url`: по умолчанию `https://api.openai.com/v1/responses`.
+- `reasoning_effort`, `verbosity`, `temperature`, `top_p`, penalties.
+- `debug_mode`: безопасная диагностика (секреты маскируются).
+- `locale`: `ru` / `en`.
+
+## Локальная разработка
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+pip install -e .[dev]
+pytest
+ruff check .
+black --check .
+mypy ulauncher_gpt
+```
+
+## Автодоки
+
+```bash
+pdoc ulauncher_gpt -o docs/api
+```
+
+## Проверка актуальности API/моделей
+
+Проверено на дату **2026-02-07** по официальным источникам OpenAI:
+
+- https://platform.openai.com/docs/api-reference/responses/object
+- https://platform.openai.com/docs/api-reference/chat
+- https://developers.openai.com/blog/responses-api
+- https://platform.openai.com/docs/models/gpt-5-mini/
+
+## Ограничения
+
+- В CI нет e2e с реальным API-ключом (только mock HTTP).
+- Плагин синхронный (`requests`), без async.
