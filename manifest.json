@@ -1,7 +1,7 @@
 {
     "required_api_version": "^2.0.0",
     "name": "ChatGPT",
-    "description": "Create a domain specific assistant using OpenAI API",
+    "description": "Domain-specific assistant на OpenAI Responses API",
     "developer_name": "SeoFernando",
     "icon": "images/icon.png",
     "options": {
@@ -18,109 +18,127 @@
             "id": "api_key",
             "type": "input",
             "name": "OpenAI API Key",
-            "description": "You can get one at https://platform.openai.com/account/api-keys",
+            "description": "Ключ OpenAI API",
             "default_value": ""
         },
         {
             "id": "model",
             "type": "select",
-            "name": "OpenAI chat completion model",
-            "description": "For model names see https://platform.openai.com/docs/guides/chat",
+            "name": "OpenAI model",
+            "description": "Консервативный whitelist + custom",
             "default_value": "gpt-5",
             "options": [
-                {"value": "gpt-5", "text": "GPT-5 (Latest, most capable, expensive)"},
-                {"value": "gpt-5-mini", "text": "GPT-5 Mini (Latest, cost-efficient)"},
-                {"value": "gpt-5-nano", "text": "GPT-5 Nano (Latest, fastest, most cost-efficient)"},
-                {"value": "custom", "text": "Custom Model"}
+                {"value": "gpt-5", "text": "gpt-5"},
+                {"value": "gpt-5-mini", "text": "gpt-5-mini"},
+                {"value": "gpt-5-nano", "text": "gpt-5-nano"},
+                {"value": "custom", "text": "Custom model"}
             ]
         },
         {
             "id": "custom_model",
             "type": "input",
             "name": "Custom Model Name",
-            "description": "Only used when 'Custom Model' is selected above",
+            "description": "Используется только при model=custom",
             "default_value": ""
         },
         {
             "id": "system_prompt",
             "type": "input",
             "name": "System Prompt",
-            "description": "A prompt to give some context to the system. This is optional but highly recommended.",
-            "default_value": "You're a helpful assistant who answers briefly."
+            "description": "Контекст и правила ответа",
+            "default_value": "Ты полезный ассистент, отвечай коротко."
         },
         {
             "id": "reasoning_effort",
             "type": "select",
             "name": "Reasoning Effort",
-            "description": "How much effort to put into reasoning about the task.",
+            "description": "Насколько глубоко модель рассуждает",
             "default_value": "minimal",
             "options": [
-                {"value": "minimal", "text": "Minimal reasoning"},
-                {"value": "low", "text": "Low reasoning"},
-                {"value": "medium", "text": "Moderate reasoning"},
-                {"value": "high", "text": "Extensive reasoning"}
+                {"value": "minimal", "text": "minimal"},
+                {"value": "low", "text": "low"},
+                {"value": "medium", "text": "medium"},
+                {"value": "high", "text": "high"}
             ]
         },
         {
             "id": "verbosity",
             "type": "select",
             "name": "Verbosity",
-            "description": "How verbose the output should be.",
+            "description": "Детализация ответа",
             "default_value": "low",
             "options": [
-                {"value": "low", "text": "Low verbosity"},
-                {"value": "medium", "text": "Moderate verbosity"},
-                {"value": "high", "text": "Extensive verbosity"}
+                {"value": "low", "text": "low"},
+                {"value": "medium", "text": "medium"},
+                {"value": "high", "text": "high"}
             ]
         },
         {
             "id": "endpoint_url",
             "type": "input",
-            "name": "OpenAI API endpoint URL",
-            "description": "The OpenAI API endpoint URL (default: https://api.openai.com/v1/chat/completions)",
-            "default_value": "https://api.openai.com/v1/chat/completions"
+            "name": "OpenAI endpoint URL",
+            "description": "По умолчанию: https://api.openai.com/v1/responses",
+            "default_value": "https://api.openai.com/v1/responses"
         },
         {
             "id": "temperature",
             "type": "input",
             "name": "Temperature",
-            "description": "Lower = Predictable text | Higher = Surprising/Random text (0 to 2)",
+            "description": "Диапазон 0..2",
             "default_value": "1"
         },
         {
             "id": "max_completion_tokens",
             "type": "input",
-            "name": "Max Completion Tokens",
-            "description": "Maximum number of tokens to generate (1 to x)",
+            "name": "Max Output Tokens",
+            "description": "Legacy id сохранен для обратной совместимости",
             "default_value": "500"
         },
         {
             "id": "top_p",
             "type": "input",
             "name": "Top P",
-            "description": "Controls diversity via nucleus sampling (0 to 1)",
+            "description": "Диапазон 0..1",
             "default_value": "1.0"
         },
         {
             "id": "frequency_penalty",
             "type": "input",
             "name": "Frequency Penalty",
-            "description": "Prevents words from being repeated too often (-2 to 2)",
+            "description": "Диапазон -2..2",
             "default_value": "0.0"
         },
         {
             "id": "presence_penalty",
             "type": "input",
             "name": "Presence Penalty",
-            "description": "Prevents topic repetition (-2 to 2)",
+            "description": "Диапазон -2..2",
             "default_value": "0.0"
         },
         {
             "id": "line_wrap",
             "type": "input",
             "name": "Line Length",
-            "description": "The maximum number of characters per line.",
+            "description": "Максимум символов в строке интерфейса",
             "default_value": "50"
+        },
+        {
+            "id": "debug_mode",
+            "type": "checkbox",
+            "name": "Debug Mode",
+            "description": "Логирование безопасной диагностики (без секретов)",
+            "default_value": false
+        },
+        {
+            "id": "locale",
+            "type": "select",
+            "name": "Locale",
+            "description": "Язык UI-строк плагина",
+            "default_value": "ru",
+            "options": [
+                {"value": "ru", "text": "Русский"},
+                {"value": "en", "text": "English"}
+            ]
         }
     ]
 }
