@@ -30,7 +30,7 @@
 ## Настройки
 
 - `api_key`: ключ OpenAI.
-- `model`: `gpt-5`, `gpt-5-mini`, `gpt-5-nano` или `custom`.
+- `model`: `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini` или `custom` (в UI подписаны ориентиры цены за 1M токенов input/output).
 - `endpoint_url`: по умолчанию `https://api.openai.com/v1/responses`.
 - `reasoning_effort`, `verbosity`, `temperature`, `top_p`, penalties.
 - `debug_mode`: безопасная диагностика (секреты маскируются).
@@ -74,6 +74,9 @@ pdoc ulauncher_gpt -o docs/api
 - https://platform.openai.com/docs/api-reference/chat
 - https://developers.openai.com/blog/responses-api
 - https://platform.openai.com/docs/models/gpt-5-mini/
+
+Примечание: в плагине по умолчанию используется whitelist для аккаунтов без верификации (`gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini`).
+Цены в подписи моделей основаны на OpenAI pricing snapshot от 2026-02-07 и могут меняться.
 
 ## Ограничения
 

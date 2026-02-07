@@ -25,12 +25,12 @@
             "id": "model",
             "type": "select",
             "name": "OpenAI model",
-            "description": "Консервативный whitelist + custom",
-            "default_value": "gpt-5",
+            "description": "Whitelist под не-verified аккаунты + custom",
+            "default_value": "gpt-4.1-mini",
             "options": [
-                {"value": "gpt-5", "text": "gpt-5"},
-                {"value": "gpt-5-mini", "text": "gpt-5-mini"},
-                {"value": "gpt-5-nano", "text": "gpt-5-nano"},
+                {"value": "gpt-4.1-mini", "text": "gpt-4.1-mini (recommended) - $0.40/1M in, $1.60/1M out"},
+                {"value": "gpt-4.1", "text": "gpt-4.1 - $2.00/1M in, $8.00/1M out"},
+                {"value": "gpt-4o-mini", "text": "gpt-4o-mini - $0.15/1M in, $0.60/1M out"},
                 {"value": "custom", "text": "Custom model"}
             ]
         },

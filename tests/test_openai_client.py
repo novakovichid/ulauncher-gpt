@@ -43,7 +43,7 @@ def _config() -> PluginConfig:
     return PluginConfig.from_preferences(
         {
             "api_key": "sk-test",
-            "model": "gpt-5",
+            "model": "gpt-4.1-mini",
             "endpoint_url": "https://api.openai.com/v1/responses",
             "system_prompt": "x",
             "temperature": "1",
@@ -125,3 +125,68 @@ def test_list_models_returns_sorted_ids() -> None:
     client = OpenAIResponsesClient(session=session, retry_backoff_seconds=0)
     models = client.list_models(_config(), correlation_id="cid")
     assert models == ["gpt-5", "gpt-5-mini"]
+
+
+def test_payload_for_gpt41_family_uses_sampling_and_penalties() -> None:
+    client = OpenAIResponsesClient(session=_FakeSession([]), retry_backoff_seconds=0)
+    payload = client._build_payload("ping", _config())
+    assert "temperature" in payload
+    assert "top_p" in payload
+    assert "frequency_penalty" in payload
+    assert "presence_penalty" in payload
+    assert "reasoning" not in payload
+    assert "text" not in payload
+
+
+def test_payload_for_gpt4o_mini_uses_sampling_and_penalties() -> None:
+    client = OpenAIResponsesClient(session=_FakeSession([]), retry_backoff_seconds=0)
+    config = PluginConfig.from_preferences(
+        {
+            "api_key": "sk-test",
+            "model": "gpt-4o-mini",
+            "endpoint_url": "https://api.openai.com/v1/responses",
+            "system_prompt": "x",
+            "temperature": "1",
+            "max_completion_tokens": "50",
+            "top_p": "1",
+            "frequency_penalty": "0",
+            "presence_penalty": "0",
+            "line_wrap": "50",
+            "verbosity": "high",
+            "reasoning_effort": "medium",
+        }
+    )
+    payload = client._build_payload("ping", config)
+    assert "temperature" in payload
+    assert "top_p" in payload
+    assert "frequency_penalty" in payload
+    assert "presence_penalty" in payload
+    assert "reasoning" not in payload
+    assert "text" not in payload
+
+
+def test_payload_for_gpt5_family_uses_reasoning_and_verbosity() -> None:
+    client = OpenAIResponsesClient(session=_FakeSession([]), retry_backoff_seconds=0)
+    config = PluginConfig.from_preferences(
+        {
+            "api_key": "sk-test",
+            "model": "custom",
+            "custom_model": "gpt-5-mini",
+            "endpoint_url": "https://api.openai.com/v1/responses",
+            "system_prompt": "x",
+            "temperature": "1",
+            "max_completion_tokens": "50",
+            "top_p": "1",
+            "frequency_penalty": "0",
+            "presence_penalty": "0",
+            "line_wrap": "50",
+            "verbosity": "high",
+            "reasoning_effort": "medium",
+        }
+    )
+    payload = client._build_payload("ping", config)
+    assert "reasoning" in payload
+    assert "text" in payload
+    assert "temperature" not in payload
+    assert "top_p" not in payload
+    assert "frequency_penalty" not in payload

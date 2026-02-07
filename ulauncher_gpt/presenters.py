@@ -12,6 +12,7 @@ from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 
 from .i18n import t
+from .pricing import pricing_label
 from .utils import truncate_for_ui, wrap_text
 
 EXTENSION_ICON = "images/icon.png"
@@ -113,7 +114,7 @@ def models_action(
         items.append(
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name=label,
+                name=f"{label} | {pricing_label(model)}",
                 on_enter=CopyToClipboardAction(f"/use-model {model}"),
             )
         )

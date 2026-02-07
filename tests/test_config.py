@@ -6,7 +6,7 @@ from ulauncher_gpt.config import ConfigError, PluginConfig
 def _base_preferences() -> dict[str, str]:
     return {
         "api_key": "sk-test",
-        "model": "gpt-5",
+        "model": "gpt-4.1-mini",
         "custom_model": "",
         "endpoint_url": "https://api.openai.com/v1/responses",
         "system_prompt": "test",
@@ -25,7 +25,7 @@ def _base_preferences() -> dict[str, str]:
 
 def test_config_parses_valid_preferences() -> None:
     config = PluginConfig.from_preferences(_base_preferences())
-    assert config.model == "gpt-5"
+    assert config.model == "gpt-4.1-mini"
     assert config.max_output_tokens == 500
 
 
@@ -64,3 +64,10 @@ def test_config_defaults_locale_when_invalid() -> None:
     prefs["locale"] = "de"
     config = PluginConfig.from_preferences(prefs)
     assert config.locale == "ru"
+
+
+def test_config_accepts_gpt_4o_mini() -> None:
+    prefs = _base_preferences()
+    prefs["model"] = "gpt-4o-mini"
+    config = PluginConfig.from_preferences(prefs)
+    assert config.model == "gpt-4o-mini"

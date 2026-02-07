@@ -86,6 +86,7 @@ class OpenAIResponsesClient:
         raise APIError(f"Сетевой сбой при запросе к OpenAI: {last_error}")
 
     def _build_payload(self, prompt: str, config: PluginConfig) -> dict[str, Any]:
+        capabilities = _model_capabilities(config.model)
         payload: dict[str, Any] = {
             "model": config.model,
             "input": [
@@ -93,13 +94,17 @@ class OpenAIResponsesClient:
                 {"role": "user", "content": prompt},
             ],
             "max_output_tokens": config.max_output_tokens,
-            "temperature": config.temperature,
-            "top_p": config.top_p,
-            "frequency_penalty": config.frequency_penalty,
-            "presence_penalty": config.presence_penalty,
-            "text": {"verbosity": config.verbosity},
-            "reasoning": {"effort": config.reasoning_effort},
         }
+        if capabilities["sampling"]:
+            payload["temperature"] = config.temperature
+            payload["top_p"] = config.top_p
+        if capabilities["penalties"]:
+            payload["frequency_penalty"] = config.frequency_penalty
+            payload["presence_penalty"] = config.presence_penalty
+        if capabilities["verbosity"]:
+            payload["text"] = {"verbosity": config.verbosity}
+        if capabilities["reasoning"]:
+            payload["reasoning"] = {"effort": config.reasoning_effort}
         return payload
 
     def _parse_generated_answer(self, data: dict[str, Any]) -> GeneratedAnswer:
@@ -213,3 +218,21 @@ def _derive_models_endpoint(responses_endpoint: str) -> str:
         return f"{parsed.scheme}://{parsed.netloc}{prefix}/v1/models"
     base = path.rsplit("/", 1)[0] if "/" in path else ""
     return f"{parsed.scheme}://{parsed.netloc}{base}/models"
+
+
+def _model_capabilities(model: str) -> dict[str, bool]:
+    """Return capability matrix for payload fields by model family."""
+    normalized = model.lower().strip()
+    if normalized.startswith("gpt-5") or normalized.startswith("o"):
+        return {
+            "sampling": False,
+            "penalties": False,
+            "verbosity": True,
+            "reasoning": True,
+        }
+    return {
+        "sampling": True,
+        "penalties": True,
+        "verbosity": False,
+        "reasoning": False,
+    }

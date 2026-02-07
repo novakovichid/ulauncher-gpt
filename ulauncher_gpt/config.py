@@ -8,8 +8,8 @@ from typing import Any
 from .utils import parse_bool
 
 DEFAULT_ENDPOINT = "https://api.openai.com/v1/responses"
-DEFAULT_MODEL = "gpt-5"
-ALLOWED_MODELS = {"gpt-5", "gpt-5-mini", "gpt-5-nano"}
+DEFAULT_MODEL = "gpt-4.1-mini"
+ALLOWED_MODELS = {"gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini"}
 ALLOWED_VERBOSITY = {"low", "medium", "high"}
 ALLOWED_REASONING = {"minimal", "low", "medium", "high"}
 ALLOWED_LOCALES = {"ru", "en"}
@@ -55,7 +55,7 @@ class PluginConfig:
             model = selected_model
         else:
             raise ConfigError(
-                "Недопустимая модель. Используйте gpt-5/gpt-5-mini/gpt-5-nano или custom"
+                "Недопустимая модель. Используйте gpt-4.1-mini/gpt-4.1/gpt-4o-mini или custom"
             )
 
         endpoint_url = (
