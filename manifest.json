@@ -2,7 +2,7 @@
     "required_api_version": "^2.0.0",
     "name": "ChatGPT",
     "description": "Domain-specific assistant на OpenAI Responses API",
-    "developer_name": "SeoFernando",
+    "developer_name": "SeoFernando, NovakovichID",
     "icon": "images/icon.png",
     "options": {
         "query_debounce": 1

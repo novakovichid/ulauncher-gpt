@@ -8,12 +8,13 @@ from ulauncher.api.shared.action.CopyToClipboardAction import CopyToClipboardAct
 from ulauncher.api.shared.action.DoNothingAction import DoNothingAction
 from ulauncher.api.shared.action.OpenUrlAction import OpenUrlAction
 from ulauncher.api.shared.action.RenderResultListAction import RenderResultListAction
+from ulauncher.api.shared.action.RunScriptAction import RunScriptAction
 from ulauncher.api.shared.item.ExtensionResultItem import ExtensionResultItem
 from ulauncher.api.shared.item.ExtensionSmallResultItem import ExtensionSmallResultItem
 
 from .i18n import t
 from .pricing import power_label, power_rank, pricing_label
-from .utils import truncate_for_ui, wrap_text
+from .utils import build_preview_popup_command, truncate_for_ui, wrap_text
 
 EXTENSION_ICON = "images/icon.png"
 GOOGLE_ICON = "images/google-logo.png"
@@ -66,7 +67,7 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
     """Render completion and convenience links for prompt."""
     ui_text = truncate_for_ui(wrap_text(answer, line_wrap))
     encoded_prompt = quote_plus(prompt)
-    preview_text = truncate_for_ui(answer, 1200)
+    preview_command = build_preview_popup_command(answer)
 
     return RenderResultListAction(
         [
@@ -78,8 +79,8 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
             ExtensionResultItem(
                 icon=EXTENSION_ICON,
                 name="Предпросмотр ответа",
-                description=wrap_text(preview_text, 90),
-                on_enter=DoNothingAction(),
+                description="Открыть полный ответ во всплывающем окне",
+                on_enter=RunScriptAction(preview_command),
             ),
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,

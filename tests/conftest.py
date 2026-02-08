@@ -35,6 +35,9 @@ def _install_ulauncher_stubs() -> None:
         "ulauncher.api.shared.action.OpenUrlAction": types.ModuleType(
             "ulauncher.api.shared.action.OpenUrlAction"
         ),
+        "ulauncher.api.shared.action.RunScriptAction": types.ModuleType(
+            "ulauncher.api.shared.action.RunScriptAction"
+        ),
         "ulauncher.api.shared.action.DoNothingAction": types.ModuleType(
             "ulauncher.api.shared.action.DoNothingAction"
         ),
@@ -87,6 +90,10 @@ def _install_ulauncher_stubs() -> None:
     class DoNothingAction:
         pass
 
+    class RunScriptAction:
+        def __init__(self, script: str) -> None:
+            self.script = script
+
     modules["ulauncher.api.client.Extension"].Extension = Extension
     modules["ulauncher.api.client.EventListener"].EventListener = EventListener
     modules["ulauncher.api.shared.event"].KeywordQueryEvent = KeywordQueryEvent
@@ -103,6 +110,7 @@ def _install_ulauncher_stubs() -> None:
         CopyToClipboardAction
     )
     modules["ulauncher.api.shared.action.OpenUrlAction"].OpenUrlAction = OpenUrlAction
+    modules["ulauncher.api.shared.action.RunScriptAction"].RunScriptAction = RunScriptAction
     modules["ulauncher.api.shared.action.DoNothingAction"].DoNothingAction = DoNothingAction
 
     for name, module in modules.items():

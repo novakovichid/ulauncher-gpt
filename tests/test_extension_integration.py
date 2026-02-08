@@ -91,6 +91,7 @@ def test_listener_success_action_contains_encoded_links() -> None:
     action = listener.on_event(_Event("a b+c;;"), _ExtensionCtx(_prefs()))
     assert len(action.items) == 6
     assert action.items[1].name == "Предпросмотр ответа"
+    assert action.items[1].on_enter.script.startswith("bash -lc ")
     assert action.items[2].name == "Скопировать полный ответ"
     assert "a+b%2Bc" in action.items[3].on_enter.url
     assert "a+b%2Bc" in action.items[4].on_enter.url

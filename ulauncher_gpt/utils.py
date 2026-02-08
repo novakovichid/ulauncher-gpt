@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 import uuid
 from typing import Any
 from urllib.parse import quote_plus
@@ -70,3 +71,26 @@ def parse_bool(raw: Any, default: bool = False) -> bool:
 def new_correlation_id() -> str:
     """Return short correlation ID for request tracing in logs."""
     return uuid.uuid4().hex[:12]
+
+
+def build_preview_popup_command(text: str, max_chars: int = 120_000) -> str:
+    """Build shell command that opens response text in a system popup dialog."""
+    safe_text = text[:max_chars]
+    quoted = shlex.quote(safe_text)
+    script = (
+        "text=\"$1\"; "
+        "if command -v zenity >/dev/null 2>&1; then "
+        "tmp=$(mktemp /tmp/ulauncher-gpt-preview.XXXXXX.txt); "
+        "printf '%s' \"$text\" > \"$tmp\"; "
+        "zenity --text-info --title='Ulauncher GPT Preview' "
+        "--width=900 --height=700 --filename=\"$tmp\"; "
+        "rm -f \"$tmp\"; "
+        "elif command -v kdialog >/dev/null 2>&1; then "
+        "kdialog --title 'Ulauncher GPT Preview' --msgbox \"$text\"; "
+        "elif command -v xmessage >/dev/null 2>&1; then "
+        "xmessage -center \"$text\"; "
+        "else "
+        "notify-send 'Ulauncher GPT' 'No popup tool found (install zenity/kdialog/xmessage)'; "
+        "fi"
+    )
+    return f"bash -lc {shlex.quote(script)} _ {quoted}"
