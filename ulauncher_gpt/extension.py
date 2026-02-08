@@ -23,6 +23,7 @@ from .presenters import (
 from .utils import mask_secret, new_correlation_id
 
 logger = logging.getLogger(__name__)
+ASK_PREFIX = "/ask "
 
 
 class GPTExtension(Extension):
@@ -101,6 +102,23 @@ class KeywordQueryEventListener(EventListener):
                 message="Теперь используется модель из настроек плагина.",
             )
 
+        prompt_text = ""
+        if search_term.startswith(ASK_PREFIX):
+            prompt_text = search_term.replace(ASK_PREFIX, "", 1).strip()
+            if not prompt_text:
+                return error_action(config.locale, "Использование: /ask <текст запроса>")
+        elif search_term.startswith("/"):
+            return info_action(
+                title="Неизвестная команда",
+                message="Доступные команды: /ask, /models, /use-model, /clear-model",
+            )
+        else:
+            return info_action(
+                title="Ручной запуск включен",
+                message="Для отправки в OpenAI используйте: /ask <текст>",
+                clipboard=f"/ask {search_term}",
+            )
+
         try:
             effective_config = (
                 replace(config, model=self._selected_model)
@@ -108,7 +126,7 @@ class KeywordQueryEventListener(EventListener):
                 else config
             )
             generated = self.client.generate(
-                prompt=search_term,
+                prompt=prompt_text,
                 config=effective_config,
                 correlation_id=correlation_id,
             )
@@ -122,6 +140,6 @@ class KeywordQueryEventListener(EventListener):
         return success_action(
             locale=config.locale,
             answer=generated.text,
-            prompt=search_term,
+            prompt=prompt_text,
             line_wrap=config.line_wrap,
         )
