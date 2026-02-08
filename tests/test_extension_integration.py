@@ -59,6 +59,7 @@ def _prefs() -> dict[str, str]:
         "verbosity": "low",
         "reasoning_effort": "minimal",
         "locale": "ru",
+        "submit_suffix": ";;",
     }
 
 
@@ -76,7 +77,7 @@ def test_listener_returns_empty_prompt_action() -> None:
 
 def test_listener_handles_api_error() -> None:
     listener = KeywordQueryEventListener(_StubClient(err=APIError("boom")))
-    action = listener.on_event(_Event("/ask hello"), _ExtensionCtx(_prefs()))
+    action = listener.on_event(_Event("hello;;"), _ExtensionCtx(_prefs()))
     assert len(action.items) == 1
     assert "ошибка" in action.items[0].name.lower()
 
@@ -87,7 +88,7 @@ def test_listener_success_action_contains_encoded_links() -> None:
             result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-4.1-mini")
         )
     )
-    action = listener.on_event(_Event("/ask a b+c"), _ExtensionCtx(_prefs()))
+    action = listener.on_event(_Event("a b+c;;"), _ExtensionCtx(_prefs()))
     assert len(action.items) == 6
     assert action.items[1].name == "Предпросмотр ответа"
     assert action.items[2].name == "Скопировать полный ответ"
@@ -111,7 +112,7 @@ def test_listener_use_model_and_clear_model() -> None:
     set_action = listener.on_event(_Event("/use-model gpt-4.1"), _ExtensionCtx(_prefs()))
     assert "Runtime-модель обновлена" in set_action.items[0].name
 
-    listener.on_event(_Event("/ask hello"), _ExtensionCtx(_prefs()))
+    listener.on_event(_Event("hello;;"), _ExtensionCtx(_prefs()))
     assert client.last_model == "gpt-4.1"
 
     clear_action = listener.on_event(_Event("/clear-model"), _ExtensionCtx(_prefs()))
@@ -124,11 +125,11 @@ def test_listener_use_model_rejects_unavailable() -> None:
     assert "недоступна" in action.items[0].description
 
 
-def test_listener_plain_text_requires_manual_ask() -> None:
+def test_listener_plain_text_requires_submit_suffix() -> None:
     client = _StubClient(
         result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-4.1-mini")
     )
     listener = KeywordQueryEventListener(client)
     action = listener.on_event(_Event("hello"), _ExtensionCtx(_prefs()))
-    assert "Ручной запуск" in action.items[0].name
+    assert "Ожидание отправки" in action.items[0].name
     assert client.generate_calls == 0

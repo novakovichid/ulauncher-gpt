@@ -37,6 +37,7 @@ class PluginConfig:
     reasoning_effort: str
     debug_mode: bool
     locale: str
+    submit_suffix: str
 
     @classmethod
     def from_preferences(cls, preferences: dict[str, Any]) -> PluginConfig:
@@ -107,6 +108,12 @@ class PluginConfig:
         if locale not in ALLOWED_LOCALES:
             locale = "ru"
 
+        submit_suffix = str(preferences.get("submit_suffix", ";;")).strip()
+        if not submit_suffix:
+            raise ConfigError("Поле submit_suffix не должно быть пустым")
+        if len(submit_suffix) > 12:
+            raise ConfigError("Поле submit_suffix слишком длинное (макс. 12 символов)")
+
         return cls(
             api_key=api_key,
             endpoint_url=endpoint_url,
@@ -122,6 +129,7 @@ class PluginConfig:
             reasoning_effort=reasoning_effort,
             debug_mode=debug_mode,
             locale=locale,
+            submit_suffix=submit_suffix,
         )
 
 

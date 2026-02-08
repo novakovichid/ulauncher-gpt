@@ -123,6 +123,13 @@
             "default_value": "50"
         },
         {
+            "id": "submit_suffix",
+            "type": "input",
+            "name": "Submit Suffix",
+            "description": "Запрос отправляется только если строка оканчивается этим суффиксом",
+            "default_value": ";;"
+        },
+        {
             "id": "debug_mode",
             "type": "select",
             "name": "Debug Mode",

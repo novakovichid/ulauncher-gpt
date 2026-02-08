@@ -20,6 +20,7 @@ def _base_preferences() -> dict[str, str]:
         "reasoning_effort": "minimal",
         "debug_mode": "false",
         "locale": "ru",
+        "submit_suffix": ";;",
     }
 
 
@@ -71,3 +72,10 @@ def test_config_accepts_gpt_4o_mini() -> None:
     prefs["model"] = "gpt-4o-mini"
     config = PluginConfig.from_preferences(prefs)
     assert config.model == "gpt-4o-mini"
+
+
+def test_config_rejects_empty_submit_suffix() -> None:
+    prefs = _base_preferences()
+    prefs["submit_suffix"] = ""
+    with pytest.raises(ConfigError):
+        PluginConfig.from_preferences(prefs)

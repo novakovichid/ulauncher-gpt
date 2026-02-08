@@ -23,7 +23,6 @@ from .presenters import (
 from .utils import mask_secret, new_correlation_id
 
 logger = logging.getLogger(__name__)
-ASK_PREFIX = "/ask "
 
 
 class GPTExtension(Extension):
@@ -103,20 +102,26 @@ class KeywordQueryEventListener(EventListener):
             )
 
         prompt_text = ""
-        if search_term.startswith(ASK_PREFIX):
-            prompt_text = search_term.replace(ASK_PREFIX, "", 1).strip()
-            if not prompt_text:
-                return error_action(config.locale, "Использование: /ask <текст запроса>")
-        elif search_term.startswith("/"):
+        if search_term.startswith("/"):
             return info_action(
                 title="Неизвестная команда",
-                message="Доступные команды: /ask, /models, /use-model, /clear-model",
+                message="Доступные команды: /models, /use-model, /clear-model",
             )
+        elif search_term.endswith(config.submit_suffix):
+            prompt_text = search_term[: -len(config.submit_suffix)].strip()
+            if not prompt_text:
+                return error_action(
+                    config.locale,
+                    f"Введите текст перед суффиксом отправки: {config.submit_suffix}",
+                )
         else:
             return info_action(
-                title="Ручной запуск включен",
-                message="Для отправки в OpenAI используйте: /ask <текст>",
-                clipboard=f"/ask {search_term}",
+                title="Ожидание отправки",
+                message=(
+                    "Чтобы отправить запрос, добавьте в конец: "
+                    f"{config.submit_suffix}"
+                ),
+                clipboard=f"{search_term}{config.submit_suffix}",
             )
 
         try:
