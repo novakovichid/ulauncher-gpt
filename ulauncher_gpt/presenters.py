@@ -65,7 +65,7 @@ def info_action(title: str, message: str, clipboard: str | None = None) -> Rende
 
 def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> RenderResultListAction:
     """Render completion and convenience links for prompt."""
-    ui_text = truncate_for_ui(wrap_text(answer, line_wrap))
+    ui_text = truncate_for_ui(wrap_text(answer, line_wrap), 4000)
     encoded_prompt = quote_plus(prompt)
     preview_command = build_preview_popup_command(answer)
 
@@ -81,9 +81,10 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
                 name="Предпросмотр ответа",
                 on_enter=RunScriptAction(preview_command),
             ),
-            ExtensionSmallResultItem(
+            ExtensionResultItem(
                 icon=EXTENSION_ICON,
-                name=f"Ответ: {ui_text}",
+                name="Ответ",
+                description=ui_text,
                 on_enter=CopyToClipboardAction(answer),
             ),
             ExtensionSmallResultItem(
