@@ -15,6 +15,18 @@
             "default_value": "gpt"
         },
         {
+            "id": "gpt_kw_alt_1",
+            "type": "keyword",
+            "name": "GPT Alt Keyword 1",
+            "default_value": "ai"
+        },
+        {
+            "id": "gpt_kw_alt_2",
+            "type": "keyword",
+            "name": "GPT Alt Keyword 2",
+            "default_value": "chat"
+        },
+        {
             "id": "api_key",
             "type": "input",
             "name": "OpenAI API Key",

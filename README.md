@@ -32,6 +32,7 @@
 ## Настройки
 
 - `api_key`: ключ OpenAI.
+- `gpt_kw`, `gpt_kw_alt_1`, `gpt_kw_alt_2`: несколько keyword-алиасов для запуска плагина.
 - `model`: `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini` или `custom` (в UI подписаны Tier мощности и ориентиры цены за 1M токенов input/output).
 - `endpoint_url`: по умолчанию `https://api.openai.com/v1/responses`.
 - `reasoning_effort`, `verbosity`, `temperature`, `top_p`, penalties.
