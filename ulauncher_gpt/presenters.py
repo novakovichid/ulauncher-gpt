@@ -73,18 +73,17 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
         [
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name=f"Ответ: {ui_text}",
+                name="Скопировать полный ответ",
                 on_enter=CopyToClipboardAction(answer),
             ),
-            ExtensionResultItem(
+            ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
                 name="Предпросмотр ответа",
-                description="Открыть полный ответ во всплывающем окне",
                 on_enter=RunScriptAction(preview_command),
             ),
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name="Скопировать полный ответ",
+                name=f"Ответ: {ui_text}",
                 on_enter=CopyToClipboardAction(answer),
             ),
             ExtensionSmallResultItem(
