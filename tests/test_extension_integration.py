@@ -24,10 +24,12 @@ class _StubClient:
         self.err = err
         self.models = models if models is not None else ["gpt-4.1-mini"]
         self.last_model: str | None = None
+        self.generate_calls = 0
 
     def generate(self, prompt: str, config: PluginConfig, correlation_id: str):
         if self.err:
             raise self.err
+        self.generate_calls += 1
         self.last_model = config.model
         return self.result
 
@@ -74,7 +76,7 @@ def test_listener_returns_empty_prompt_action() -> None:
 
 def test_listener_handles_api_error() -> None:
     listener = KeywordQueryEventListener(_StubClient(err=APIError("boom")))
-    action = listener.on_event(_Event("hello"), _ExtensionCtx(_prefs()))
+    action = listener.on_event(_Event("/ask hello"), _ExtensionCtx(_prefs()))
     assert len(action.items) == 1
     assert "ошибка" in action.items[0].name.lower()
 
@@ -85,10 +87,12 @@ def test_listener_success_action_contains_encoded_links() -> None:
             result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-4.1-mini")
         )
     )
-    action = listener.on_event(_Event("a b+c"), _ExtensionCtx(_prefs()))
-    assert len(action.items) == 4
-    assert "a+b%2Bc" in action.items[1].on_enter.url
-    assert "a+b%2Bc" in action.items[2].on_enter.url
+    action = listener.on_event(_Event("/ask a b+c"), _ExtensionCtx(_prefs()))
+    assert len(action.items) == 6
+    assert action.items[1].name == "Предпросмотр ответа"
+    assert action.items[2].name == "Скопировать полный ответ"
+    assert "a+b%2Bc" in action.items[3].on_enter.url
+    assert "a+b%2Bc" in action.items[4].on_enter.url
 
 
 def test_listener_models_command_returns_models_list() -> None:
@@ -107,7 +111,7 @@ def test_listener_use_model_and_clear_model() -> None:
     set_action = listener.on_event(_Event("/use-model gpt-4.1"), _ExtensionCtx(_prefs()))
     assert "Runtime-модель обновлена" in set_action.items[0].name
 
-    listener.on_event(_Event("hello"), _ExtensionCtx(_prefs()))
+    listener.on_event(_Event("/ask hello"), _ExtensionCtx(_prefs()))
     assert client.last_model == "gpt-4.1"
 
     clear_action = listener.on_event(_Event("/clear-model"), _ExtensionCtx(_prefs()))
@@ -118,3 +122,13 @@ def test_listener_use_model_rejects_unavailable() -> None:
     listener = KeywordQueryEventListener(_StubClient(models=["gpt-4.1-mini"]))
     action = listener.on_event(_Event("/use-model gpt-4.1"), _ExtensionCtx(_prefs()))
     assert "недоступна" in action.items[0].description
+
+
+def test_listener_plain_text_requires_manual_ask() -> None:
+    client = _StubClient(
+        result=GeneratedAnswer(text="answer", raw_response_id="r1", model="gpt-4.1-mini")
+    )
+    listener = KeywordQueryEventListener(client)
+    action = listener.on_event(_Event("hello"), _ExtensionCtx(_prefs()))
+    assert "Ручной запуск" in action.items[0].name
+    assert client.generate_calls == 0

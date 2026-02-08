@@ -66,12 +66,24 @@ def success_action(locale: str, answer: str, prompt: str, line_wrap: int) -> Ren
     """Render completion and convenience links for prompt."""
     ui_text = truncate_for_ui(wrap_text(answer, line_wrap))
     encoded_prompt = quote_plus(prompt)
+    preview_text = truncate_for_ui(answer, 1200)
 
     return RenderResultListAction(
         [
             ExtensionSmallResultItem(
                 icon=EXTENSION_ICON,
-                name=ui_text,
+                name=f"Ответ: {ui_text}",
+                on_enter=CopyToClipboardAction(answer),
+            ),
+            ExtensionResultItem(
+                icon=EXTENSION_ICON,
+                name="Предпросмотр ответа",
+                description=wrap_text(preview_text, 90),
+                on_enter=DoNothingAction(),
+            ),
+            ExtensionSmallResultItem(
+                icon=EXTENSION_ICON,
+                name="Скопировать полный ответ",
                 on_enter=CopyToClipboardAction(answer),
             ),
             ExtensionSmallResultItem(
